@@ -16,6 +16,18 @@ Postman QA suite for validating the `supervisor/generate` integration endpoint.
    - `wrongScopeToken`
 3. Run collection folders in order.
 
+## Test Scope Checklist
+
+The repository should validate all of the following:
+
+- Contract and happy-path API behavior
+- Authentication failures (missing, malformed, expired token)
+- Authorization boundaries (scope and tenant isolation)
+- Input validation and malformed JSON handling
+- Security abuse checks (injection and mass-assignment attempts)
+- Rate limiting and retry signaling (`429` + `Retry-After`)
+- CI workflow reliability (GitHub Actions trigger, Newman execution, and report artifact upload)
+
 ## Optional CI (Newman)
 
 ```powershell
