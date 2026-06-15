@@ -10,6 +10,9 @@
     { "key": "basePath", "value": "/integration/v1/identity/supervisor/generate" },
     { "key": "challengePath", "value": "/integration/v1/identity/supervisor/entityId/challenge" },
     { "key": "revokePath", "value": "/integration/v1/identity/supervisor/entityId/revoke" },
+    { "key": "handshakePath", "value": "/integration/v1/identity/supervisor/handshake" },
+    { "key": "didA", "value": "foo" },
+    { "key": "didB", "value": "bar" },
     { "key": "validToken", "value": "REPLACE_VALID_TOKEN" },
     { "key": "invalidToken", "value": "abc.def.ghi" },
     { "key": "expiredToken", "value": "REPLACE_EXPIRED_TOKEN" },
@@ -861,6 +864,170 @@
                 "exec": [
                   "pm.test('Tampered query/path is safely handled', function () {",
                   "  pm.expect([200,202,204,400,403,404,409,422]).to.include(pm.response.code);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "09 - Handshake Endpoint",
+      "item": [
+        {
+          "name": "TC-HAND-001 Handshake Happy/Auth Smoke",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{validToken}}" },
+              { "key": "Accept", "value": "application/json" },
+              { "key": "X-Correlation-Id", "value": "{{$guid}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}{{handshakePath}}?didA={{didA}}&didB={{didB}}" }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Handshake returns expected status family', function () {",
+                  "  pm.expect([200,202,204]).to.include(pm.response.code);",
+                  "});",
+                  "pm.test('No sensitive fields in response', function () {",
+                  "  const text = pm.response.text().toLowerCase();",
+                  "  ['password','secret','privatekey'].forEach(k => pm.expect(text.includes('\\\"' + k + '\\\"')).to.eql(false));",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "TC-HAND-002 Missing Token",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "X-Correlation-Id", "value": "{{$guid}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}{{handshakePath}}?didA={{didA}}&didB={{didB}}" }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Missing token is denied', function () {",
+                  "  pm.expect([401,403]).to.include(pm.response.code);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "TC-HAND-003 Missing didA",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{validToken}}" },
+              { "key": "Accept", "value": "application/json" },
+              { "key": "X-Correlation-Id", "value": "{{$guid}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}{{handshakePath}}?didB={{didB}}" }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Missing didA is rejected', function () {",
+                  "  pm.expect([400,422]).to.include(pm.response.code);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "TC-HAND-004 Missing didB",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{validToken}}" },
+              { "key": "Accept", "value": "application/json" },
+              { "key": "X-Correlation-Id", "value": "{{$guid}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}{{handshakePath}}?didA={{didA}}" }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Missing didB is rejected', function () {",
+                  "  pm.expect([400,422]).to.include(pm.response.code);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "TC-HAND-005 Injection Query Tampering",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{validToken}}" },
+              { "key": "Accept", "value": "application/json" },
+              { "key": "X-Correlation-Id", "value": "{{$guid}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}{{handshakePath}}?didA=' OR '1'='1&didB=..%2f..%2fadmin" }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Tampered handshake query is safely handled', function () {",
+                  "  pm.expect([400,401,403,404,422]).to.include(pm.response.code);",
+                  "});",
+                  "pm.test('No internals leaked', function () {",
+                  "  const t = pm.response.text().toLowerCase();",
+                  "  ['sql','stacktrace','exception at'].forEach(x => pm.expect(t.includes(x)).to.eql(false));",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "TC-HAND-006 Wrong Method POST",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{validToken}}" },
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" },
+              { "key": "X-Correlation-Id", "value": "{{$guid}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{}" },
+            "url": { "raw": "{{baseUrl}}{{handshakePath}}?didA={{didA}}&didB={{didB}}" }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Wrong method is rejected', function () {",
+                  "  pm.expect([400,404,405]).to.include(pm.response.code);",
                   "});"
                 ],
                 "type": "text/javascript"

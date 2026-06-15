@@ -28,6 +28,7 @@ The repository should validate all of the following:
 - Rate limiting and retry signaling (`429` + `Retry-After`)
 - Challenge endpoint coverage (`/integration/v1/identity/supervisor/entityId/challenge`)
 - Revoke endpoint adversarial coverage (`/integration/v1/identity/supervisor/entityId/revoke`)
+- Handshake endpoint query coverage (`/integration/v1/identity/supervisor/handshake?didA=foo&didB=bar`)
 - CI workflow reliability (GitHub Actions trigger, Newman execution, and report artifact upload)
 
 ## Optional CI (Newman)
