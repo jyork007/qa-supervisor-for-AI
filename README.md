@@ -26,6 +26,7 @@ The repository should validate all of the following:
 - Input validation and malformed JSON handling
 - Security abuse checks (injection and mass-assignment attempts)
 - Rate limiting and retry signaling (`429` + `Retry-After`)
+- Challenge endpoint coverage (`/integration/v1/identity/supervisor/entityId/challenge`)
 - CI workflow reliability (GitHub Actions trigger, Newman execution, and report artifact upload)
 
 ## Optional CI (Newman)

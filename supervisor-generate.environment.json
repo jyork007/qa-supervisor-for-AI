@@ -4,6 +4,7 @@
   "values": [
     { "key": "baseUrl", "value": "https://api.credentials.dev.app.hyland.com", "enabled": true },
     { "key": "basePath", "value": "/integration/v1/identity/supervisor/generate", "enabled": true },
+    { "key": "challengePath", "value": "/integration/v1/identity/supervisor/entityId/challenge", "enabled": true },
     { "key": "validToken", "value": "", "enabled": true },
     { "key": "invalidToken", "value": "abc.def.ghi", "enabled": true },
     { "key": "expiredToken", "value": "", "enabled": true },
