@@ -1,0 +1,439 @@
+{
+  "info": {
+    "name": "Supervisor Generate API - Security + Functional Suite",
+    "_postman_id": "d2d95dfb-bdaf-4f65-a8dc-4a5f8f5477c2",
+    "description": "Automated tests for correctness, auth, validation, abuse resistance, and rate limiting.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "https://api.credentials.dev.app.hyland.com" },
+    { "key": "endpoint", "value": "/integration/v1/identity/supervisor/generate" },
+    { "key": "validToken", "value": "REPLACE_VALID_TOKEN" },
+    { "key": "invalidToken", "value": "abc.def.ghi" },
+    { "key": "expiredToken", "value": "REPLACE_EXPIRED_TOKEN" },
+    { "key": "wrongScopeToken", "value": "REPLACE_WRONG_SCOPE_TOKEN" },
+    { "key": "tenantA", "value": "tenant-a" },
+    { "key": "tenantB", "value": "tenant-b" },
+    { "key": "defaultSupervisorId", "value": "SUP-001" }
+  ],
+  "item": [
+    {
+      "name": "01 - Contract + Happy Path",
+      "item": [
+        {
+          "name": "TC-CON-001 Happy Path",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{validToken}}" },
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" },
+              { "key": "X-Correlation-Id", "value": "{{$guid}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"supervisorId\": \"{{defaultSupervisorId}}\",\n  \"identityType\": \"employee\",\n  \"context\": {\n    \"tenantId\": \"{{tenantA}}\",\n    \"requestedBy\": \"qa-automation\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}{{endpoint}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{endpoint}}"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200 or 201', function () {",
+                  "  pm.expect([200, 201]).to.include(pm.response.code);",
+                  "});",
+                  "pm.test('Content-Type is JSON', function () {",
+                  "  pm.expect(pm.response.headers.get('Content-Type') || '').to.include('application/json');",
+                  "});",
+                  "pm.test('Response does not expose sensitive fields', function () {",
+                  "  const text = pm.response.text().toLowerCase();",
+                  "  ['password','secret','privatekey'].forEach(k => pm.expect(text.includes('\\\"' + k + '\\\"')).to.eql(false));",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "02 - Authentication",
+      "item": [
+        {
+          "name": "TC-AUTH-001 Missing Token",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" },
+              { "key": "X-Correlation-Id", "value": "{{$guid}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"supervisorId\": \"{{defaultSupervisorId}}\",\n  \"identityType\": \"employee\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}{{endpoint}}" }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Missing token returns 401 or 403', function () {",
+                  "  pm.expect([401,403]).to.include(pm.response.code);",
+                  "});",
+                  "pm.test('No stack trace leakage', function () {",
+                  "  const t = pm.response.text().toLowerCase();",
+                  "  ['stacktrace','exception at','sqlstate'].forEach(x => pm.expect(t.includes(x)).to.eql(false));",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "TC-AUTH-002 Malformed Token",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{invalidToken}}" },
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" },
+              { "key": "X-Correlation-Id", "value": "{{$guid}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"supervisorId\": \"{{defaultSupervisorId}}\",\n  \"identityType\": \"employee\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}{{endpoint}}" }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Malformed token returns 401 or 403', function () {",
+                  "  pm.expect([401,403]).to.include(pm.response.code);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "TC-AUTH-003 Expired Token",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{expiredToken}}" },
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" },
+              { "key": "X-Correlation-Id", "value": "{{$guid}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"supervisorId\": \"{{defaultSupervisorId}}\",\n  \"identityType\": \"employee\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}{{endpoint}}" }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Expired token returns 401 or 403', function () {",
+                  "  pm.expect([401,403]).to.include(pm.response.code);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "03 - Authorization",
+      "item": [
+        {
+          "name": "TC-AUTZ-001 Wrong Scope",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{wrongScopeToken}}" },
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" },
+              { "key": "X-Correlation-Id", "value": "{{$guid}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"supervisorId\": \"{{defaultSupervisorId}}\",\n  \"identityType\": \"employee\",\n  \"context\": { \"tenantId\": \"{{tenantA}}\" }\n}"
+            },
+            "url": { "raw": "{{baseUrl}}{{endpoint}}" }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Wrong scope denied', function () {",
+                  "  pm.expect([403,401]).to.include(pm.response.code);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "TC-AUTZ-002 Cross Tenant Access Attempt",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{validToken}}" },
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" },
+              { "key": "X-Correlation-Id", "value": "{{$guid}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"supervisorId\": \"{{defaultSupervisorId}}\",\n  \"identityType\": \"employee\",\n  \"context\": { \"tenantId\": \"{{tenantB}}\" }\n}"
+            },
+            "url": { "raw": "{{baseUrl}}{{endpoint}}" }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Cross-tenant request is blocked or masked', function () {",
+                  "  pm.expect([403,404]).to.include(pm.response.code);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "04 - Validation",
+      "item": [
+        {
+          "name": "TC-VAL-001 Missing Required Field",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{validToken}}" },
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" },
+              { "key": "X-Correlation-Id", "value": "{{$guid}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"identityType\": \"employee\",\n  \"context\": { \"tenantId\": \"{{tenantA}}\" }\n}"
+            },
+            "url": { "raw": "{{baseUrl}}{{endpoint}}" }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Missing required field returns 400/422', function () {",
+                  "  pm.expect([400,422]).to.include(pm.response.code);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "TC-VAL-002 Wrong Type",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{validToken}}" },
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" },
+              { "key": "X-Correlation-Id", "value": "{{$guid}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"supervisorId\": 12345,\n  \"identityType\": \"employee\",\n  \"context\": { \"tenantId\": \"{{tenantA}}\" }\n}"
+            },
+            "url": { "raw": "{{baseUrl}}{{endpoint}}" }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Type mismatch returns 400/422', function () {",
+                  "  pm.expect([400,422]).to.include(pm.response.code);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "TC-VAL-003 Malformed JSON",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{validToken}}" },
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" },
+              { "key": "X-Correlation-Id", "value": "{{$guid}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"supervisorId\": \"SUP-001\", \"identityType\": \"employee\", "
+            },
+            "url": { "raw": "{{baseUrl}}{{endpoint}}" }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Malformed JSON returns 400', function () {",
+                  "  pm.expect([400]).to.include(pm.response.code);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "05 - Security Abuse Checks",
+      "item": [
+        {
+          "name": "TC-SEC-001 Injection Payload",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{validToken}}" },
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" },
+              { "key": "X-Correlation-Id", "value": "{{$guid}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"supervisorId\": \"' OR '1'='1\",\n  \"identityType\": \"employee\",\n  \"context\": { \"tenantId\": \"{{tenantA}}\" }\n}"
+            },
+            "url": { "raw": "{{baseUrl}}{{endpoint}}" }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Injection attempt is rejected or safely handled', function () {",
+                  "  pm.expect([400,401,403,422]).to.include(pm.response.code);",
+                  "});",
+                  "pm.test('No internals leaked in response', function () {",
+                  "  const t = pm.response.text().toLowerCase();",
+                  "  ['sql','stacktrace','exception at','internal server error at'].forEach(x => pm.expect(t.includes(x)).to.eql(false));",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "TC-SEC-002 Mass Assignment Attempt",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{validToken}}" },
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" },
+              { "key": "X-Correlation-Id", "value": "{{$guid}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"supervisorId\": \"{{defaultSupervisorId}}\",\n  \"identityType\": \"employee\",\n  \"isAdmin\": true,\n  \"role\": \"superadmin\",\n  \"permissions\": [\"*\"],\n  \"context\": { \"tenantId\": \"{{tenantA}}\" }\n}"
+            },
+            "url": { "raw": "{{baseUrl}}{{endpoint}}" }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Mass assignment does not grant privilege', function () {",
+                  "  pm.expect([200,201,400,403,422]).to.include(pm.response.code);",
+                  "});",
+                  "pm.test('Response should not reflect dangerous privilege fields', function () {",
+                  "  const txt = pm.response.text().toLowerCase();",
+                  "  pm.expect(txt.includes('\\\"superadmin\\\"')).to.eql(false);",
+                  "  pm.expect(txt.includes('\\\"permissions\\\"')).to.eql(false);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "06 - Rate Limit and Resilience",
+      "item": [
+        {
+          "name": "TC-RATE-001 Base Request For Runner Load",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{validToken}}" },
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" },
+              { "key": "X-Correlation-Id", "value": "{{$guid}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"supervisorId\": \"{{defaultSupervisorId}}\",\n  \"identityType\": \"employee\",\n  \"context\": { \"tenantId\": \"{{tenantA}}\" }\n}"
+            },
+            "url": { "raw": "{{baseUrl}}{{endpoint}}" }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is success or throttle', function () {",
+                  "  pm.expect((pm.response.code >= 200 && pm.response.code < 300) || pm.response.code === 429).to.eql(true);",
+                  "});",
+                  "pm.test('Retry-After present when throttled', function () {",
+                  "  if (pm.response.code === 429) {",
+                  "    pm.expect(pm.response.headers.has('Retry-After')).to.eql(true);",
+                  "  }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
