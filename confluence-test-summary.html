@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>QA Supervisor API Test Summary</title>
+  <style>
+    body { font-family: Segoe UI, Arial, sans-serif; margin: 32px; color: #1f2937; }
+    h1, h2 { color: #0f172a; }
+    table { border-collapse: collapse; width: 100%; margin-top: 8px; }
+    th, td { border: 1px solid #d1d5db; padding: 8px; text-align: left; vertical-align: top; }
+    th { background: #f3f4f6; }
+    code { background: #f3f4f6; padding: 2px 4px; border-radius: 3px; }
+  </style>
+</head>
+<body>
+  <h1>QA Supervisor API Test Summary (Confluence Ready)</h1>
+
+  <h2>Document Metadata</h2>
+  <ul>
+    <li>Repository: qa-supervisor-for-AI</li>
+    <li>Collection: supervisor-generate.collection.json</li>
+    <li>Environment: supervisor-generate.environment.json</li>
+    <li>Total test requests: 32</li>
+    <li>Base URL: <code>https://api.credentials.dev.app.hyland.com</code></li>
+  </ul>
+
+  <h2>Scope</h2>
+  <p>This test suite validates supervisor identity integration endpoints for functional correctness, authentication and authorization enforcement, input validation, abuse resistance, and rate limiting behavior.</p>
+
+  <h2>Endpoints Covered</h2>
+  <ul>
+    <li><code>/integration/v1/identity/supervisor/generate</code></li>
+    <li><code>/integration/v1/identity/supervisor/entityId/challenge</code></li>
+    <li><code>/integration/v1/identity/supervisor/entityId/revoke</code></li>
+    <li><code>/integration/v1/identity/supervisor/handshake?didA=foo&amp;didB=bar</code></li>
+  </ul>
+
+  <h2>Test Inventory By Folder</h2>
+  <table>
+    <thead>
+      <tr><th>Folder</th><th>Test Count</th><th>What It Tests</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>01 - Contract + Happy Path</td><td>1</td><td>Valid request succeeds, JSON response contract, no sensitive-field leakage.</td></tr>
+      <tr><td>02 - Authentication</td><td>3</td><td>Missing token, malformed token, expired token behavior.</td></tr>
+      <tr><td>03 - Authorization</td><td>2</td><td>Scope enforcement and tenant-boundary isolation.</td></tr>
+      <tr><td>04 - Validation</td><td>3</td><td>Missing required fields, wrong data types, malformed JSON handling.</td></tr>
+      <tr><td>05 - Security Abuse Checks</td><td>2</td><td>Injection payload resilience and mass-assignment protection.</td></tr>
+      <tr><td>06 - Rate Limit and Resilience</td><td>1</td><td>Throttling behavior and Retry-After signaling for 429 responses.</td></tr>
+      <tr><td>07 - Challenge Endpoint</td><td>2</td><td>Challenge endpoint auth smoke and missing-token denial.</td></tr>
+      <tr><td>08 - Revoke Endpoint Adversarial Coverage</td><td>12</td><td>Full revoke threat coverage: auth bypass attempts, wrong method, malformed content, injection, header spoofing, query/path tampering.</td></tr>
+      <tr><td>09 - Handshake Endpoint</td><td>6</td><td>Query-param handshake behavior, missing didA/didB rejection, injection/tampering, method restrictions.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Security Controls Validated</h2>
+  <ul>
+    <li>Authentication enforcement</li>
+    <li>Authorization and privilege boundary enforcement</li>
+    <li>Tenant isolation controls</li>
+    <li>Input schema and parser hardening</li>
+    <li>Injection resistance patterns</li>
+    <li>Mass-assignment resistance</li>
+    <li>Method restriction enforcement</li>
+    <li>Header spoofing resistance</li>
+    <li>Query/path tampering resilience</li>
+    <li>Error sanitization (no stack traces/SQL internals)</li>
+    <li>Basic anti-abuse/rate-limit signaling</li>
+  </ul>
+
+  <h2>What This Suite Does Not Fully Prove</h2>
+  <ul>
+    <li>It does not prove absolute security against all attack techniques.</li>
+    <li>It does not replace source-code security review, SAST/DAST, dependency scanning, and penetration testing.</li>
+    <li>It does not include long-running distributed denial-of-service simulation.</li>
+  </ul>
+
+  <h2>CI/CD Coverage</h2>
+  <p>The repository includes GitHub Actions workflow automation using Newman:</p>
+  <ul>
+    <li>Trigger: push, pull request, manual dispatch</li>
+    <li>Behavior: runs collection when required token secret is configured</li>
+    <li>Output: JUnit artifact upload for reporting</li>
+  </ul>
+
+  <h2>Required Runtime Variables/Secrets</h2>
+  <ul>
+    <li>validToken (required)</li>
+    <li>expiredToken (optional)</li>
+    <li>wrongScopeToken (optional)</li>
+    <li>didA (default: foo)</li>
+    <li>didB (default: bar)</li>
+  </ul>
+
+  <h2>Suggested Next Enhancements</h2>
+  <ol>
+    <li>Add explicit expected schema assertions per endpoint response model.</li>
+    <li>Add time-based replay and idempotency tests where applicable.</li>
+    <li>Add dedicated load profile for revoke and handshake endpoints.</li>
+    <li>Integrate baseline DAST step in staging pipeline.</li>
+  </ol>
+</body>
+</html>
