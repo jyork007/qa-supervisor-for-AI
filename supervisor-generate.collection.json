@@ -7,7 +7,7 @@
   },
   "variable": [
     { "key": "baseUrl", "value": "https://api.credentials.dev.app.hyland.com" },
-    { "key": "endpoint", "value": "/integration/v1/identity/supervisor/generate" },
+    { "key": "basePath", "value": "/integration/v1/identity/supervisor/generate" },
     { "key": "validToken", "value": "REPLACE_VALID_TOKEN" },
     { "key": "invalidToken", "value": "abc.def.ghi" },
     { "key": "expiredToken", "value": "REPLACE_EXPIRED_TOKEN" },
@@ -35,9 +35,9 @@
               "raw": "{\n  \"supervisorId\": \"{{defaultSupervisorId}}\",\n  \"identityType\": \"employee\",\n  \"context\": {\n    \"tenantId\": \"{{tenantA}}\",\n    \"requestedBy\": \"qa-automation\"\n  }\n}"
             },
             "url": {
-              "raw": "{{baseUrl}}{{endpoint}}",
+              "raw": "{{baseUrl}}{{basePath}}",
               "host": ["{{baseUrl}}"],
-              "path": ["{{endpoint}}"]
+              "path": ["{{basePath}}"]
             }
           },
           "event": [
@@ -79,7 +79,7 @@
               "mode": "raw",
               "raw": "{\n  \"supervisorId\": \"{{defaultSupervisorId}}\",\n  \"identityType\": \"employee\"\n}"
             },
-            "url": { "raw": "{{baseUrl}}{{endpoint}}" }
+            "url": { "raw": "{{baseUrl}}{{basePath}}" }
           },
           "event": [
             {
@@ -113,7 +113,7 @@
               "mode": "raw",
               "raw": "{\n  \"supervisorId\": \"{{defaultSupervisorId}}\",\n  \"identityType\": \"employee\"\n}"
             },
-            "url": { "raw": "{{baseUrl}}{{endpoint}}" }
+            "url": { "raw": "{{baseUrl}}{{basePath}}" }
           },
           "event": [
             {
@@ -143,7 +143,7 @@
               "mode": "raw",
               "raw": "{\n  \"supervisorId\": \"{{defaultSupervisorId}}\",\n  \"identityType\": \"employee\"\n}"
             },
-            "url": { "raw": "{{baseUrl}}{{endpoint}}" }
+            "url": { "raw": "{{baseUrl}}{{basePath}}" }
           },
           "event": [
             {
@@ -178,7 +178,7 @@
               "mode": "raw",
               "raw": "{\n  \"supervisorId\": \"{{defaultSupervisorId}}\",\n  \"identityType\": \"employee\",\n  \"context\": { \"tenantId\": \"{{tenantA}}\" }\n}"
             },
-            "url": { "raw": "{{baseUrl}}{{endpoint}}" }
+            "url": { "raw": "{{baseUrl}}{{basePath}}" }
           },
           "event": [
             {
@@ -208,7 +208,7 @@
               "mode": "raw",
               "raw": "{\n  \"supervisorId\": \"{{defaultSupervisorId}}\",\n  \"identityType\": \"employee\",\n  \"context\": { \"tenantId\": \"{{tenantB}}\" }\n}"
             },
-            "url": { "raw": "{{baseUrl}}{{endpoint}}" }
+            "url": { "raw": "{{baseUrl}}{{basePath}}" }
           },
           "event": [
             {
@@ -243,7 +243,7 @@
               "mode": "raw",
               "raw": "{\n  \"identityType\": \"employee\",\n  \"context\": { \"tenantId\": \"{{tenantA}}\" }\n}"
             },
-            "url": { "raw": "{{baseUrl}}{{endpoint}}" }
+            "url": { "raw": "{{baseUrl}}{{basePath}}" }
           },
           "event": [
             {
@@ -273,7 +273,7 @@
               "mode": "raw",
               "raw": "{\n  \"supervisorId\": 12345,\n  \"identityType\": \"employee\",\n  \"context\": { \"tenantId\": \"{{tenantA}}\" }\n}"
             },
-            "url": { "raw": "{{baseUrl}}{{endpoint}}" }
+            "url": { "raw": "{{baseUrl}}{{basePath}}" }
           },
           "event": [
             {
@@ -303,7 +303,7 @@
               "mode": "raw",
               "raw": "{ \"supervisorId\": \"SUP-001\", \"identityType\": \"employee\", "
             },
-            "url": { "raw": "{{baseUrl}}{{endpoint}}" }
+            "url": { "raw": "{{baseUrl}}{{basePath}}" }
           },
           "event": [
             {
@@ -338,7 +338,7 @@
               "mode": "raw",
               "raw": "{\n  \"supervisorId\": \"' OR '1'='1\",\n  \"identityType\": \"employee\",\n  \"context\": { \"tenantId\": \"{{tenantA}}\" }\n}"
             },
-            "url": { "raw": "{{baseUrl}}{{endpoint}}" }
+            "url": { "raw": "{{baseUrl}}{{basePath}}" }
           },
           "event": [
             {
@@ -372,7 +372,7 @@
               "mode": "raw",
               "raw": "{\n  \"supervisorId\": \"{{defaultSupervisorId}}\",\n  \"identityType\": \"employee\",\n  \"isAdmin\": true,\n  \"role\": \"superadmin\",\n  \"permissions\": [\"*\"],\n  \"context\": { \"tenantId\": \"{{tenantA}}\" }\n}"
             },
-            "url": { "raw": "{{baseUrl}}{{endpoint}}" }
+            "url": { "raw": "{{baseUrl}}{{basePath}}" }
           },
           "event": [
             {
@@ -412,7 +412,7 @@
               "mode": "raw",
               "raw": "{\n  \"supervisorId\": \"{{defaultSupervisorId}}\",\n  \"identityType\": \"employee\",\n  \"context\": { \"tenantId\": \"{{tenantA}}\" }\n}"
             },
-            "url": { "raw": "{{baseUrl}}{{endpoint}}" }
+            "url": { "raw": "{{baseUrl}}{{basePath}}" }
           },
           "event": [
             {
