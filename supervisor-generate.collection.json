@@ -16,6 +16,21 @@
     { "key": "tenantB", "value": "tenant-b" },
     { "key": "defaultSupervisorId", "value": "SUP-001" }
   ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "const expected = '/integration/v1/identity/supervisor/generate';",
+          "const actual = pm.variables.get('basePath') || '';",
+          "if (actual !== expected) {",
+          "  throw new Error(`Invalid basePath: ${actual}. Expected: ${expected}`);",
+          "}"
+        ]
+      }
+    }
+  ],
   "item": [
     {
       "name": "01 - Contract + Happy Path",
