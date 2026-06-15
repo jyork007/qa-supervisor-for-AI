@@ -1,0 +1,66 @@
+name: Postman Newman Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  newman:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install Newman
+        run: npm install -g newman
+
+      - name: Prepare runtime environment file
+        run: |
+          cp supervisor-generate.environment.json supervisor-generate.environment.runtime.json
+          node -e "const fs=require('fs'); const p='supervisor-generate.environment.runtime.json'; const j=JSON.parse(fs.readFileSync(p,'utf8')); const set=(k,v)=>{const x=j.values.find(e=>e.key===k); if(x && v) x.value=v;}; set('validToken', process.env.POSTMAN_VALID_TOKEN); set('expiredToken', process.env.POSTMAN_EXPIRED_TOKEN); set('wrongScopeToken', process.env.POSTMAN_WRONG_SCOPE_TOKEN); fs.writeFileSync(p, JSON.stringify(j, null, 2));"
+        env:
+          POSTMAN_VALID_TOKEN: ${{ secrets.POSTMAN_VALID_TOKEN }}
+          POSTMAN_EXPIRED_TOKEN: ${{ secrets.POSTMAN_EXPIRED_TOKEN }}
+          POSTMAN_WRONG_SCOPE_TOKEN: ${{ secrets.POSTMAN_WRONG_SCOPE_TOKEN }}
+
+      - name: Check required token secret
+        id: token_check
+        run: |
+          if [ -n "${{ secrets.POSTMAN_VALID_TOKEN }}" ]; then
+            echo "run_tests=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "run_tests=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Run Newman collection
+        if: steps.token_check.outputs.run_tests == 'true'
+        run: |
+          mkdir -p test-results
+          newman run supervisor-generate.collection.json \
+            -e supervisor-generate.environment.runtime.json \
+            --reporters cli,junit \
+            --reporter-junit-export test-results/newman-supervisor.xml \
+            --bail
+
+      - name: Upload Newman report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: newman-report
+          path: test-results/newman-supervisor.xml
+          if-no-files-found: ignore
+
+      - name: Missing secret notice
+        if: steps.token_check.outputs.run_tests != 'true'
+        run: |
+          echo "POSTMAN_VALID_TOKEN secret is not configured."
+          echo "Skipping Newman run. Add repository secrets to enable automated API tests."

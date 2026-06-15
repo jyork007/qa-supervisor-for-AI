@@ -21,3 +21,15 @@ Postman QA suite for validating the `supervisor/generate` integration endpoint.
 ```powershell
 newman run .\supervisor-generate.collection.json -e .\supervisor-generate.environment.json --reporters cli,junit --bail
 ```
+
+## GitHub Actions
+
+This repository includes a workflow at `.github/workflows/newman.yml` that runs on push, pull request, and manual dispatch.
+
+To enable automated API execution, add these repository secrets:
+
+- `POSTMAN_VALID_TOKEN` (required)
+- `POSTMAN_EXPIRED_TOKEN` (optional)
+- `POSTMAN_WRONG_SCOPE_TOKEN` (optional)
+
+If `POSTMAN_VALID_TOKEN` is not set, the workflow posts a skip notice instead of failing.
